@@ -38,6 +38,7 @@ function splitClosingInstruction(line) {
 function logicalLines(text) {
   const output = [];
   let current = "";
+  let blankBreak = false;
 
   const flush = () => {
     if (current) output.push(current);
@@ -48,12 +49,25 @@ function logicalLines(text) {
   for (const rawLine of source.split(/\r?\n/)) {
     const line = cleanLine(rawLine);
     if (!line) {
-      flush();
+      // OCR may insert a blank line in the middle of a sentence. Defer the
+      // paragraph decision until the next non-empty line is available.
+      blankBreak = Boolean(current);
       continue;
     }
 
     const structural =
       isHeading(line) || isListIntroduction(line) || /^NOTE:|^•\s*/i.test(line);
+    const continuesAcrossBlank =
+      blankBreak &&
+      current &&
+      !structural &&
+      !isHeading(current) &&
+      !isListIntroduction(current) &&
+      (!sentenceEnd.test(current) || /^[a-z]/.test(line));
+
+    if (blankBreak && !continuesAcrossBlank) flush();
+    blankBreak = false;
+
     if (
       current &&
       (isHeading(current) ||
@@ -63,7 +77,9 @@ function logicalLines(text) {
       flush();
     if (
       !current ||
-      (!sentenceEnd.test(current) && !current.endsWith(":") && !structural)
+      ((!sentenceEnd.test(current) || /^[a-z]/.test(line)) &&
+        !current.endsWith(":") &&
+        !structural)
     ) {
       current = current ? `${current} ${line}` : line;
       continue;

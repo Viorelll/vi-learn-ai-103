@@ -1,5 +1,8 @@
 :root {
   font-family: "DM Sans Variable", sans-serif;
+  /* Use an explicit 16px baseline and a modest global increase in type size. */
+  font-size: 16px;
+  font-size-adjust: 0.58;
   color: #302c38;
   background: #f8f7fa;
   font-synthesis: none;

@@ -1,5 +1,6 @@
 export const TOTAL = 135;
 export const typeLabels = {
+  'case-study': 'Case study',
   single: 'Single choice',
   multiple: 'Multiple choice',
   dropdown: 'Dropdown',
