@@ -1521,10 +1521,6 @@ select {
   padding: 20px;
   color: #705087;
 }
-.case .prose {
-  max-height: 470px;
-  overflow: auto;
-}
 .answer-heading {
   margin: 28px 0 15px;
   display: flex;
@@ -3428,7 +3424,8 @@ select,
   border-radius: 10px;
   line-height: 1.8;
   font-size: 12px;
-  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   margin: 20px 0;
   tab-size: 4;
 }
