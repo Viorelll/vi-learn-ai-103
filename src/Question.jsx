@@ -9,6 +9,7 @@ import {
   CheckCheck,
   ChevronRight,
   Expand,
+  ExternalLink,
   GripVertical,
   Info,
   Users,
@@ -254,9 +255,47 @@ export function AnswerInput({ q, value, onChange, disabled = false }) {
     </div>
   );
 }
+
+const examTopicsDiscussionIds = {
+  118: 424420,
+  119: 424416,
+  120: 424419,
+  121: 424413,
+  122: 424414,
+  123: 424404,
+  124: 424417,
+  125: 424411,
+  126: 424421,
+  127: 424407,
+  128: 424415,
+  129: 424412,
+  130: 424418,
+  131: 424406,
+  132: 424409,
+  133: 424410,
+  134: 424405,
+  135: 424408,
+};
+
+function examTopicsUrl(questionId) {
+  const discussionId =
+    examTopicsDiscussionIds[questionId] ??
+    (questionId <= 65 ? 412432 + questionId : 421446 + questionId);
+  return `https://www.examtopics.com/discussions/microsoft/view/${discussionId}-exam-ai-103-topic-1-question-${questionId}-discussion/`;
+}
+
 export function QuestionContent({ q }) {
   return (
     <>
+      <a
+        className="examtopics-link"
+        href={examTopicsUrl(q.id)}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`View question ${q.id} on ExamTopics`}
+      >
+        View on ExamTopics <ExternalLink size={14} />
+      </a>
       {q.note && (
         <div className="source-note">
           <Info size={18} />

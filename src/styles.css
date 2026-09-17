@@ -1343,6 +1343,20 @@ select {
   overflow-wrap: anywhere;
   color: #43384d;
 }
+.examtopics-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 18px;
+  color: #66507c;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration-color: #c8b8da;
+  text-underline-offset: 3px;
+}
+.examtopics-link:hover {
+  color: #50346f;
+}
 .structured-text {
   display: flex;
   flex-direction: column;
