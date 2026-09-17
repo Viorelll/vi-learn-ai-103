@@ -1345,8 +1345,8 @@ select {
   padding: 6px 10px;
 }
 .good-score {
-  background: #f4eff8;
-  color: #79569a;
+  background: #dcfce7;
+  color: #166534;
 }
 .history-row > svg {
   color: #887795;
@@ -2068,7 +2068,7 @@ select {
   color: #bc8d6d;
 }
 .status-icon.correct {
-  color: #79569a;
+  color: #16a34a;
 }
 .status-icon.ungraded {
   color: #a79baa;
@@ -2091,8 +2091,8 @@ select {
   margin-top: 25px;
 }
 .review-banner.correct {
-  background: #f4eff8;
-  color: #79569a;
+  background: #dcfce7;
+  color: #166534;
 }
 .review-banner.incorrect {
   background: #fde8e8;
@@ -2120,7 +2120,7 @@ select {
   font-size: 12px;
 }
 .good {
-  color: #79569a;
+  color: #15803d;
 }
 .bad {
   color: #b42318;
