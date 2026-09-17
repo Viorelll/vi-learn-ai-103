@@ -9,6 +9,7 @@ import {
   Settings2,
   Clock,
   CheckCheck,
+  ChevronLeft,
   ChevronRight,
   Flag,
   Play,
@@ -40,7 +41,14 @@ import {
 } from "./engine";
 import { QuestionContent, AnswerInput, AnswerReview } from "./Question";
 import { Pill, Stat, Empty, Hero, Builder } from "./Dashboard";
+import { relatedQuestions } from "./relatedQuestions";
 const byId = Object.fromEntries(bank.map((q) => [q.id, q]));
+const linkedQuestionId = Number(
+  new URLSearchParams(window.location.search).get("question"),
+);
+const initialLibraryQuestionId = byId[linkedQuestionId]
+  ? linkedQuestionId
+  : null;
 const initialConfig = {
   mode: "blocks",
   size: 10,
@@ -56,7 +64,9 @@ const dateLabel = (date) =>
     day: "numeric",
   });
 export default function App() {
-  const [page, setPage] = useState("dashboard");
+  const [page, setPage] = useState(
+    initialLibraryQuestionId ? "question" : "dashboard",
+  );
   const [config, setConfig] = useState(() => ({
     ...initialConfig,
     ...readSaved("foundry:config", {}),
@@ -84,6 +94,13 @@ export default function App() {
   const [reviewFilter, setReviewFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [libraryQuestionId, setLibraryQuestionId] = useState(
+    initialLibraryQuestionId,
+  );
+  const [libraryPage, setLibraryPage] = useState(1);
+  const [libraryPageSize, setLibraryPageSize] = useState(10);
+  const [libraryAnswers, setLibraryAnswers] = useState({});
+  const [checkedLibraryQuestions, setCheckedLibraryQuestions] = useState({});
   const [error, setError] = useState("");
   const [storageError, setStorageError] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
@@ -240,6 +257,24 @@ export default function App() {
           .toLowerCase()
           .includes(search.toLowerCase())),
   );
+  const libraryPageCount = Math.max(
+    1,
+    Math.ceil(libraryQuestions.length / libraryPageSize),
+  );
+  const currentLibraryPage = Math.min(libraryPage, libraryPageCount);
+  const libraryPageStart = (currentLibraryPage - 1) * libraryPageSize;
+  const visibleLibraryQuestions = libraryQuestions.slice(
+    libraryPageStart,
+    libraryPageStart + libraryPageSize,
+  );
+  const libraryQuestion = libraryQuestionId ? byId[libraryQuestionId] : null;
+  const relatedLibraryQuestions = libraryQuestion
+    ? relatedQuestions(libraryQuestion, bank)
+    : [];
+  const openLibraryQuestion = (questionId) => {
+    setLibraryQuestionId(questionId);
+    go("question");
+  };
   const openReview = (h) => {
     setReview(h);
     setReviewFilter("all");
@@ -498,7 +533,8 @@ export default function App() {
                   <span className="eyebrow">ALL THE BUILDING BLOCKS</span>
                   <h1>Your question library.</h1>
                   <p>
-                    Browse all 135 questions and practice any one on its own.
+                    Browse all 135 questions and open any one without starting a
+                    session.
                   </p>
                 </div>
                 <Pill>135 QUESTIONS</Pill>
@@ -510,13 +546,19 @@ export default function App() {
                     aria-label="Search questions"
                     placeholder="Search by number, topic, or keyword…"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setLibraryPage(1);
+                    }}
                   />
                 </label>
                 <select
                   aria-label="Filter by question type"
                   value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
+                  onChange={(e) => {
+                    setTypeFilter(e.target.value);
+                    setLibraryPage(1);
+                  }}
                 >
                   <option value="all">All question formats</option>
                   {Object.entries(typeLabels).map(([k, v]) => (
@@ -525,13 +567,31 @@ export default function App() {
                     </option>
                   ))}
                 </select>
+                <label className="library-page-size">
+                  <span>Show</span>
+                  <select
+                    aria-label="Questions per page"
+                    value={libraryPageSize}
+                    onChange={(e) => {
+                      setLibraryPageSize(Number(e.target.value));
+                      setLibraryPage(1);
+                    }}
+                  >
+                    {[10, 20, 30].map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                  <span>per page</span>
+                </label>
               </div>
               <div className="library-list">
-                {libraryQuestions.map((q) => (
+                {visibleLibraryQuestions.map((q) => (
                   <button
                     className="library-row"
                     key={q.id}
-                    onClick={() => requestStart([q.id])}
+                    onClick={() => openLibraryQuestion(q.id)}
                   >
                     <span className="question-id">
                       {String(q.id).padStart(3, "0")}
@@ -554,11 +614,132 @@ export default function App() {
                   </button>
                 ))}
               </div>
+              {libraryQuestions.length > 0 && (
+                <nav className="library-pagination" aria-label="Question pages">
+                  <span>
+                    {libraryPageStart + 1}-
+                    {Math.min(
+                      libraryPageStart + libraryPageSize,
+                      libraryQuestions.length,
+                    )}{" "}
+                    of {libraryQuestions.length}
+                  </span>
+                  <div>
+                    <button
+                      className="icon-button"
+                      type="button"
+                      aria-label="Previous question page"
+                      disabled={currentLibraryPage === 1}
+                      onClick={() => setLibraryPage(currentLibraryPage - 1)}
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <span>
+                      Page {currentLibraryPage} of {libraryPageCount}
+                    </span>
+                    <button
+                      className="icon-button"
+                      type="button"
+                      aria-label="Next question page"
+                      disabled={currentLibraryPage === libraryPageCount}
+                      onClick={() => setLibraryPage(currentLibraryPage + 1)}
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </nav>
+              )}
               {!libraryQuestions.length && (
                 <Empty title="No matching questions">
                   Try a different number, keyword, or format.
                 </Empty>
               )}
+            </>
+          )}
+          {page === "question" && libraryQuestion && (
+            <>
+              <div className="page-heading">
+                <div>
+                  <span className="eyebrow">QUESTION LIBRARY</span>
+                  <h1>Question {libraryQuestion.id}</h1>
+                  <p>
+                    Review the source material without changing your session.
+                  </p>
+                </div>
+                <button className="secondary" onClick={() => go("library")}>
+                  <ArrowLeft size={16} />
+                  Back to library
+                </button>
+              </div>
+              <section className="panel question-card library-question">
+                <div className="question-top">
+                  <div>
+                    <span className="eyebrow">
+                      QUESTION {libraryQuestion.id}
+                    </span>
+                    <div className="question-tags">
+                      <Pill>{typeLabels[libraryQuestion.type]}</Pill>
+                      <span>Source #{libraryQuestion.id}</span>
+                    </div>
+                  </div>
+                </div>
+                <QuestionContent
+                  q={libraryQuestion}
+                  relatedGroups={relatedLibraryQuestions}
+                />
+                <div className="answer-heading">
+                  <strong>Your answer</strong>
+                  <span>
+                    {libraryQuestion.type === "multiple"
+                      ? `Select ${libraryQuestion.reviewed?.length || libraryQuestion.original?.length || "all applicable"} answers`
+                      : libraryQuestion.fields.length
+                        ? `${libraryQuestion.fields.length} selections`
+                        : "Select one answer"}
+                  </span>
+                </div>
+                <AnswerInput
+                  q={libraryQuestion}
+                  value={libraryAnswers[libraryQuestion.id]}
+                  onChange={(value) => {
+                    setLibraryAnswers((answers) => ({
+                      ...answers,
+                      [libraryQuestion.id]: value,
+                    }));
+                    setCheckedLibraryQuestions((questions) => ({
+                      ...questions,
+                      [libraryQuestion.id]: false,
+                    }));
+                  }}
+                />
+                <div className="question-footer">
+                  <span />
+                  <button
+                    className="primary"
+                    disabled={
+                      libraryQuestion.type !== "unavailable" &&
+                      !isAnswered(
+                        libraryQuestion,
+                        libraryAnswers[libraryQuestion.id],
+                      )
+                    }
+                    onClick={() =>
+                      setCheckedLibraryQuestions((questions) => ({
+                        ...questions,
+                        [libraryQuestion.id]: true,
+                      }))
+                    }
+                  >
+                    Check answer <CheckCheck size={17} />
+                  </button>
+                </div>
+                {checkedLibraryQuestions[libraryQuestion.id] && (
+                  <AnswerReview
+                    q={libraryQuestion}
+                    answer={libraryAnswers[libraryQuestion.id]}
+                    basis={config.basis}
+                  />
+                )}
+              </section>
             </>
           )}
           {page === "history" && (

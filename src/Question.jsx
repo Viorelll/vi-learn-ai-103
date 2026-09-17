@@ -284,7 +284,7 @@ function examTopicsUrl(questionId) {
   return `https://www.examtopics.com/discussions/microsoft/view/${discussionId}-exam-ai-103-topic-1-question-${questionId}-discussion/`;
 }
 
-export function QuestionContent({ q }) {
+export function QuestionContent({ q, relatedGroups = [] }) {
   return (
     <>
       <a
@@ -296,6 +296,27 @@ export function QuestionContent({ q }) {
       >
         View on ExamTopics <ExternalLink size={14} />
       </a>
+      {relatedGroups.length > 0 && (
+        <section className="related-questions">
+          <h2>Similar questions</h2>
+          <div className="related-question-chips">
+            {[
+              ...new Set(relatedGroups.flatMap((group) => group.questionIds)),
+            ].map((questionId) => (
+              <a
+                className="related-question-chip"
+                href={`?question=${questionId}`}
+                key={questionId}
+                target="_blank"
+                rel="noreferrer"
+                title={`Open Question ${questionId} in a new tab`}
+              >
+                Question {questionId} <ExternalLink size={14} />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
       {q.note && (
         <div className="source-note">
           <Info size={18} />

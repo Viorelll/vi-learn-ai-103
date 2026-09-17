@@ -12,6 +12,7 @@ import {
   hasUnclearSourceAnswer,
   isOpenAIOnlyAnswer,
 } from "../src/engine.js";
+import { relatedQuestions } from "../src/relatedQuestions.js";
 const bank = JSON.parse(
   readFileSync(new URL("../src/data/questions.json", import.meta.url)),
 );
@@ -42,6 +43,33 @@ test("all 135 source questions have valid, renderable controls and keys", () => 
       assert.equal(grade(q, undefined, basis).earned, 0);
     }
   }
+});
+test("finds exact duplicate tasks and shared case-study specifications", () => {
+  const lookup = (id) => bank.find((question) => question.id === id);
+  assert.deepEqual(relatedQuestions(lookup(1), bank), [
+    {
+      label: "Same case-study specification",
+      questionIds: [2, 27, 28, 56, 61, 62],
+    },
+  ]);
+  assert.deepEqual(relatedQuestions(lookup(38), bank), [
+    { label: "Duplicate task", questionIds: [100] },
+  ]);
+  assert.deepEqual(relatedQuestions(lookup(66), bank), [
+    { label: "Duplicate task", questionIds: [68] },
+  ]);
+});
+test("finds verified similar tasks beyond exact source matches", () => {
+  const lookup = (id) => bank.find((question) => question.id === id);
+  assert.deepEqual(relatedQuestions(lookup(14), bank), [
+    { label: "Similar task", questionIds: [30] },
+  ]);
+  assert.deepEqual(relatedQuestions(lookup(45), bank), [
+    { label: "Similar task", questionIds: [46, 88] },
+  ]);
+  assert.deepEqual(relatedQuestions(lookup(69), bank), [
+    { label: "Similar task", questionIds: [71] },
+  ]);
 });
 test("unclear answer category contains only provisional source answers with OpenAI guidance", () => {
   const unclear = bank.filter(isOpenAIOnlyAnswer);
