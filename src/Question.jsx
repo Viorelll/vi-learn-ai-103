@@ -13,7 +13,7 @@ import {
   Info,
   Users,
 } from "lucide-react";
-import { grade } from "./engine";
+import { grade, hasUnclearSourceAnswer } from "./engine";
 import { formatStructuredText } from "./textFormatting";
 const codeExhibits = new Set([
   9, 11, 14, 30, 35, 77, 93, 98, 101, 103, 104, 107, 113, 114, 119, 120, 121,
@@ -324,9 +324,7 @@ function sameKey(first, second) {
 
 function communityStatus(q) {
   const source = q.sourceAnswer || "";
-  const unclear =
-    /WARNING - community\/source answer is not fully clear/i.test(source) ||
-    /No clear answer was captured/i.test(source);
+  const unclear = hasUnclearSourceAnswer(q);
   const hasCommunityVote = /Community vote/i.test(source);
   const hasOriginalKey =
     Array.isArray(q.original) && q.original.some((value) => value !== null);

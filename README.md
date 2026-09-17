@@ -24,7 +24,7 @@ The browser test uses installed Microsoft Edge. Change `channel: 'msedge'` in `s
 
 ## Features
 
-- All 135 source question numbers, searchable by text and format.
+- All 135 source question numbers, searchable by text and format, with an **Unclear answers (OpenAI guidance)** category for questions whose source answer is marked unclear and only reviewed OpenAI guidance is available.
 - Sequential questions 1–135, random samples of 10/15/20/30, automatically grouped blocks, or any custom inclusive range.
 - Optional shuffle for ranges and the full collection; random tests contain no duplicates.
 - Radio buttons, checkboxes, dropdowns, yes/no matrices, drag-and-drop matching and ordering.
