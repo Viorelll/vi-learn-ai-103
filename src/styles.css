@@ -2094,6 +2094,10 @@ select {
   background: #f4eff8;
   color: #79569a;
 }
+.review-banner.incorrect {
+  background: #fde8e8;
+  color: #b42318;
+}
 .review-banner span {
   font-size: 10px;
   margin-left: auto;
@@ -2119,7 +2123,7 @@ select {
   color: #79569a;
 }
 .bad {
-  color: #b18c6c;
+  color: #b42318;
 }
 .muted {
   color: #978b9f;
