@@ -42,13 +42,12 @@ import {
 import { QuestionContent, AnswerInput, AnswerReview } from "./Question";
 import { Pill, Stat, Empty, Hero, Builder } from "./Dashboard";
 import { relatedQuestions } from "./relatedQuestions";
+import { parseRoute, routeForPage } from "./routing";
 const byId = Object.fromEntries(bank.map((q) => [q.id, q]));
-const linkedQuestionId = Number(
-  new URLSearchParams(window.location.search).get("question"),
-);
-const initialLibraryQuestionId = byId[linkedQuestionId]
-  ? linkedQuestionId
-  : null;
+const isKnownQuestion = (id) => Boolean(byId[id]);
+const initialRoute = parseRoute(window.location, isKnownQuestion);
+const initialLibraryQuestionId =
+  initialRoute.page === "question" ? initialRoute.questionId : null;
 const initialConfig = {
   mode: "blocks",
   size: 10,
@@ -64,23 +63,33 @@ const dateLabel = (date) =>
     day: "numeric",
   });
 export default function App() {
-  const [page, setPage] = useState(
-    initialLibraryQuestionId ? "question" : "dashboard",
-  );
+  const [page, setPage] = useState(initialRoute.page);
   const [config, setConfig] = useState(() => ({
     ...initialConfig,
     ...readSaved("foundry:config", {}),
   }));
   const [session, setSession] = useState(() => {
     const s = readSaved("foundry:session", null);
-    return s &&
+    const validSession =
+      s &&
       Array.isArray(s.ids) &&
       s.ids.length &&
       s.ids.every((id) => byId[id]) &&
       s.answers &&
       Number.isFinite(s.elapsed)
-      ? s
-      : null;
+        ? s
+        : null;
+    if (!validSession) return null;
+    const routeIndex =
+      initialRoute.page === "test" && initialRoute.questionId
+        ? validSession.ids.indexOf(initialRoute.questionId)
+        : -1;
+    return routeIndex >= 0
+      ? {
+          ...validSession,
+          index: routeIndex,
+        }
+      : validSession;
   });
   const [history, setHistory] = useState(() => {
     const x = readSaved("foundry:history", []);
@@ -90,7 +99,10 @@ export default function App() {
   });
   const [now, setNow] = useState(Date.now());
   const [confirm, setConfirm] = useState(null);
-  const [review, setReview] = useState(null);
+  const [review, setReview] = useState(() => {
+    if (initialRoute.page !== "results" || !initialRoute.reviewId) return null;
+    return history.find((item) => item.id === initialRoute.reviewId) || null;
+  });
   const [reviewFilter, setReviewFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -109,6 +121,30 @@ export default function App() {
     return () => clearInterval(t);
   }, []);
   useEffect(() => {
+    const onPopState = () => {
+      const next = parseRoute(window.location, isKnownQuestion);
+      setPage(next.page);
+      if (next.page === "question") setLibraryQuestionId(next.questionId);
+      if (next.page === "test" && next.questionId) {
+        setSession((current) => {
+          if (!current) return current;
+          const index = current.ids.indexOf(next.questionId);
+          return index >= 0 && index !== current.index
+            ? { ...current, index }
+            : current;
+        });
+      }
+      if (next.page === "results" && next.reviewId) {
+        const savedReview = history.find((item) => item.id === next.reviewId);
+        if (savedReview) setReview(savedReview);
+      }
+      setMobileNav(false);
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [history]);
+  useEffect(() => {
     try {
       localStorage.setItem("foundry:config", JSON.stringify(config));
       localStorage.setItem("foundry:session", JSON.stringify(session));
@@ -123,8 +159,16 @@ export default function App() {
       ...c,
       ...patch,
     }));
-  const go = (p) => {
+  const go = (p, options = {}) => {
+    const { replace = false, ...routeOptions } = options;
     setPage(p);
+    if (p === "question" && routeOptions.questionId)
+      setLibraryQuestionId(routeOptions.questionId);
+    const href = routeForPage(p, routeOptions);
+    const currentHref = `${window.location.pathname}${window.location.search}`;
+    if (currentHref !== href) {
+      window.history[replace ? "replaceState" : "pushState"]({}, "", href);
+    }
     setMobileNav(false);
     window.scrollTo(0, 0);
   };
@@ -152,7 +196,7 @@ export default function App() {
       setSession(s);
       setReview(null);
       setError("");
-      go("test");
+      go("test", { questionId: chosen[0] });
     } catch (e) {
       setError(e.message);
     }
@@ -176,7 +220,7 @@ export default function App() {
       ...s,
       runningSince: s.runningSince || Date.now(),
     }));
-    go("test");
+    go("test", { questionId: session.ids[session.index] });
   };
   const finish = () => {
     const done = {
@@ -190,13 +234,15 @@ export default function App() {
     setReviewFilter("all");
     setSession(null);
     setConfirm(null);
-    go("results");
+    go("results", { reviewId: done.id });
   };
   const changeIndex = (i) => {
     setSession((s) => ({
       ...s,
       index: i,
     }));
+    const questionId = session?.ids[i];
+    if (questionId) go("test", { questionId, replace: true });
     window.scrollTo({
       top: 0,
       behavior: "instant",
@@ -273,12 +319,12 @@ export default function App() {
     : [];
   const openLibraryQuestion = (questionId) => {
     setLibraryQuestionId(questionId);
-    go("question");
+    go("question", { questionId });
   };
   const openReview = (h) => {
     setReview(h);
     setReviewFilter("all");
-    go("results");
+    go("results", { reviewId: h.id });
   };
   return (
     <div className="app-shell">

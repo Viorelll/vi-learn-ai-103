@@ -31,6 +31,8 @@ The browser test uses installed Microsoft Edge. Change `channel: 'msedge'` in `s
 - Matching and ordering also support click/tap-to-place and keyboard-accessible dropdowns.
 - Case studies and original question images are preserved, with readable code transcriptions where appropriate.
 - A timer, pause/resume, question navigator, flags and answer clearing.
+- Shareable browser routes for every library question (`/question/42`), with the current session question preserved in `/test?question=42` after refresh.
+- Azure Static Web Apps rewrites routed navigation requests to the SPA entry point through `public/staticwebapp.config.json`, so shared question links also survive a direct refresh after deployment.
 - Automatic browser-local saving of settings, current answers and the last 100 completed sessions.
 - Scores, time spent, per-question review, original explanations, reviewed explanations and retry missed questions.
 - Every reviewed question shows answer evidence in three clear states: green for a clear community consensus that matches the selected key, yellow for a warning or split/unclear source answer, and blue for an independent OpenAI study answer.

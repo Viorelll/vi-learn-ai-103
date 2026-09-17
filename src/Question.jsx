@@ -305,7 +305,7 @@ export function QuestionContent({ q, relatedGroups = [] }) {
             ].map((questionId) => (
               <a
                 className="related-question-chip"
-                href={`?question=${questionId}`}
+                href={`/question/${questionId}`}
                 key={questionId}
                 target="_blank"
                 rel="noreferrer"
