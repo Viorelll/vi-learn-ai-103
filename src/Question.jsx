@@ -16,10 +16,25 @@ import {
 } from "lucide-react";
 import { grade, hasUnclearSourceAnswer } from "./engine";
 import { formatStructuredText } from "./textFormatting";
-const codeExhibits = new Set([
-  9, 11, 14, 30, 35, 77, 93, 98, 101, 103, 104, 107, 113, 114, 119, 120, 121,
-  124, 130, 134,
-]);
+
+const sourceQuestionImages = import.meta.glob("./images/question-*.png", {
+  eager: true,
+  import: "default",
+  query: "?url",
+});
+
+const sourceImagesByQuestion = Object.entries(sourceQuestionImages).reduce(
+  (images, [path, url]) => {
+    const match = path.match(/question-(\d+)(?:-(\d+))?\.png$/);
+    if (!match) return images;
+    const questionId = Number(match[1]);
+    const order = Number(match[2] || 1);
+    images[questionId] ||= [];
+    images[questionId][order - 1] = url;
+    return images;
+  },
+  {},
+);
 
 function StructuredText({ text, className, emphasizeClosingTask = false }) {
   const blocks = formatStructuredText(text, { emphasizeClosingTask });
@@ -285,6 +300,8 @@ function examTopicsUrl(questionId) {
 }
 
 export function QuestionContent({ q, relatedGroups = [] }) {
+  const images = sourceImagesByQuestion[q.id]?.filter(Boolean) || q.images;
+
   return (
     <>
       <a
@@ -345,11 +362,11 @@ export function QuestionContent({ q, relatedGroups = [] }) {
           <code>{q.code}</code>
         </pre>
       )}
-      {q.images.map((src) => (
+      {images.map((src) => (
         <details
           key={src}
           className="exhibit"
-          open={(!q.code && codeExhibits.has(q.id)) || undefined}
+          open
         >
           <summary>
             <Expand size={16} />
