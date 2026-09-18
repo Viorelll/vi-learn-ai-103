@@ -16,10 +16,6 @@ import {
 } from "lucide-react";
 import { grade, hasUnclearSourceAnswer } from "./engine";
 import { formatStructuredText } from "./textFormatting";
-const codeExhibits = new Set([
-  9, 11, 14, 30, 35, 77, 93, 98, 101, 103, 104, 107, 113, 114, 119, 120, 121,
-  124, 130, 134,
-]);
 
 function StructuredText({ text, className, emphasizeClosingTask = false }) {
   const blocks = formatStructuredText(text, { emphasizeClosingTask });
@@ -349,7 +345,6 @@ export function QuestionContent({ q, relatedGroups = [] }) {
         <details
           key={src}
           className="exhibit"
-          open={(!q.code && codeExhibits.has(q.id)) || undefined}
         >
           <summary>
             <Expand size={16} />
