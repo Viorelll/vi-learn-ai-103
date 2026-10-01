@@ -1,3 +1,5 @@
+import { selectedEntries, sessionTypeLabels } from "./questionGroups.js";
+
 export const TOTAL = 135;
 export const typeLabels = {
   "case-study": "Case study",
@@ -41,7 +43,15 @@ export function blocks(size, total = TOTAL) {
     }),
   );
 }
-export function selectQuestions(config, random = Math.random) {
+export function selectQuestions(config, random = Math.random, catalog = null) {
+  if (Object.hasOwn(sessionTypeLabels, config.mode)) {
+    if (!catalog) throw new Error("Question categories are unavailable.");
+    let entries = selectedEntries(config, catalog);
+    if (!entries.length)
+      throw new Error("Select at least one question or group.");
+    if (config.shuffle) entries = shuffled(entries, random);
+    return [...new Set(entries.flatMap((entry) => entry.ids))];
+  }
   const start =
     config.mode === "custom"
       ? Number(config.start)

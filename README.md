@@ -18,6 +18,7 @@ npm run build       # production files in dist/
 npm run preview     # serve the production build
 npm test            # scoring, ranges, answer-key and timer checks
 npm run test:browser # end-to-end checks; start the dev server first
+npm run test:sessions # new session selection, latest routes, theme and exhibits
 ```
 
 The browser test uses installed Microsoft Edge. Change `channel: 'msedge'` in `scripts/browser-test.mjs` if using a different Playwright browser.
@@ -26,6 +27,10 @@ The browser test uses installed Microsoft Edge. Change `channel: 'msedge'` in `s
 
 - All 135 source question numbers, searchable by text and format, with an **Unclear answers (OpenAI guidance)** category for questions whose source answer is marked unclear and only reviewed OpenAI guidance is available.
 - Sequential questions 1–135, random samples of 10/15/20/30, automatically grouped blocks, or any custom inclusive range.
+- Three selectable session types: **Unique questions** (115 standalone items), **Case studies** (all 8 available Contoso questions), and **Shared-question variants** (3 groups, 10 questions).
+- Search and checkbox-pick individual questions or complete groups. Filter by answer format, including Yes/No statements and multiple-choice checkboxes; use **Clear selection** then **Select visible** to practice only the filtered items. Filters do not silently change existing selections.
+- Shared variants preserve the safety solution set (23–26), response-completeness solution set (41–44), and repeated prompt with different answer choices (38 and 100). Case-study formatting differences are normalized, so question 67 remains with the same study. Group shuffle keeps related questions together.
+- Incomplete sources 66 and 68 remain accessible in the library and original range modes, but are excluded from the new session types. Original question content and answer keys are unchanged.
 - Optional shuffle for ranges and the full collection; random tests contain no duplicates.
 - Radio buttons, checkboxes, dropdowns, yes/no matrices, drag-and-drop matching and ordering.
 - Matching and ordering also support click/tap-to-place and keyboard-accessible dropdowns.

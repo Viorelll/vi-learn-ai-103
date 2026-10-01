@@ -43,7 +43,9 @@ import { QuestionContent, AnswerInput, AnswerReview } from "./Question";
 import { Pill, Stat, Empty, Hero, Builder } from "./Dashboard";
 import { relatedQuestions } from "./relatedQuestions";
 import { parseRoute, routeForPage } from "./routing";
+import { buildQuestionCatalog, sessionTypeLabels } from "./questionGroups";
 const byId = Object.fromEntries(bank.map((q) => [q.id, q]));
+const catalog = buildQuestionCatalog(bank);
 const isKnownQuestion = (id) => Boolean(byId[id]);
 const initialRoute = parseRoute(window.location, isKnownQuestion);
 const initialLibraryQuestionId =
@@ -174,7 +176,7 @@ export default function App() {
   };
   const start = (ids = null) => {
     try {
-      const chosen = ids || selectQuestions(config);
+      const chosen = ids || selectQuestions(config, Math.random, catalog);
       const s = {
         id: crypto.randomUUID(),
         ids: chosen,
@@ -189,9 +191,10 @@ export default function App() {
           ? ids.length === 1
             ? `Question ${ids[0]}`
             : "Practice set"
-          : config.mode === "random"
-            ? "Random practice"
-            : `Questions ${Math.min(...chosen)}–${Math.max(...chosen)}`,
+          : sessionTypeLabels[config.mode] ||
+            (config.mode === "random"
+              ? "Random practice"
+              : `Questions ${Math.min(...chosen)}–${Math.max(...chosen)}`),
       };
       setSession(s);
       setReview(null);
@@ -274,6 +277,7 @@ export default function App() {
         shuffle: false,
       },
       () => 0.5,
+      catalog,
     );
   } catch {}
   const q = session ? byId[session.ids[session.index]] : null;
@@ -528,6 +532,7 @@ export default function App() {
               <Builder
                 {...{
                   config,
+                  catalog,
                   updateConfig,
                   selected,
                   error,
