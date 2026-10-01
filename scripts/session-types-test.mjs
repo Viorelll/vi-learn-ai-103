@@ -17,6 +17,39 @@ try {
     .getByRole("button", { name: /Unique questions.*standalone/ })
     .click();
   await expect(page.locator(".picker-row")).toHaveCount(115);
+  await expect(page.locator(".builder-footer")).toContainText("10 questions");
+  await expect(page.locator(".range-grid button").last()).toHaveText("111–115");
+  await page.locator(".size-buttons button").filter({ hasText: "15" }).click();
+  await expect(page.locator(".builder-footer")).toContainText("15 questions");
+  await page.locator(".range-grid button").nth(1).click();
+  const pickedIds = await page
+    .locator(".picker-row input:checked")
+    .evaluateAll((inputs) =>
+      inputs.map((input) => input.getAttribute("aria-label")),
+    );
+  expect(pickedIds).toEqual([
+    "Select Question 18",
+    "Select Question 19",
+    "Select Question 20",
+    "Select Question 21",
+    "Select Question 22",
+    "Select Question 29",
+    "Select Question 30",
+    "Select Question 31",
+    "Select Question 32",
+    "Select Question 33",
+    "Select Question 34",
+    "Select Question 35",
+    "Select Question 36",
+    "Select Question 37",
+    "Select Question 39",
+  ]);
+  await page.reload();
+  await expect(page.locator(".range-grid button.selected")).toHaveText("16–30");
+  await page.locator(".range-grid button").last().click();
+  await expect(page.locator(".builder-footer")).toContainText("10 questions");
+  await page.locator(".size-buttons button").filter({ hasText: "30" }).click();
+  await expect(page.locator(".builder-footer")).toContainText("30 questions");
   await page
     .getByRole("button", { name: "Clear selection", exact: true })
     .click();

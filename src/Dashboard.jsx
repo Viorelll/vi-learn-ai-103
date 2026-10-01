@@ -115,6 +115,16 @@ export function Builder({
   requestStart,
   go,
 }) {
+  const uniqueMode = config.mode === "unique";
+  const rangeIds = (start, end) =>
+    catalog.unique.slice(start - 1, end).map((entry) => entry.id);
+  const rangeSelected = (range) =>
+    uniqueMode
+      ? selected.length === range.end - range.start + 1 &&
+        catalog.unique
+          .slice(range.start - 1, range.end)
+          .every((entry) => selected.includes(entry.ids[0]))
+      : config.block === range.start;
   return (
     <div className="builder-layout" id="test-builder">
       <section className="panel builder">
@@ -181,7 +191,15 @@ export function Builder({
               onClick={() =>
                 updateConfig({
                   mode: id,
-                  selectionIds: config.mode === id ? config.selectionIds : null,
+                  selectionIds:
+                    config.mode === id
+                      ? config.selectionIds
+                      : id === "unique"
+                        ? rangeIds(1, config.size)
+                        : null,
+                  ...(config.mode !== id && id === "unique"
+                    ? { block: 1 }
+                    : {}),
                 })
               }
             >
@@ -194,15 +212,7 @@ export function Builder({
             </button>
           ))}
         </div>
-        {sessionTypeLabels[config.mode] && (
-          <SessionPicker
-            key={config.mode}
-            config={config}
-            catalog={catalog}
-            updateConfig={updateConfig}
-          />
-        )}
-        {["blocks", "random"].includes(config.mode) && (
+        {["blocks", "random", "unique"].includes(config.mode) && (
           <>
             <label className="field-label">
               02 <span>How many questions?</span>
@@ -216,6 +226,7 @@ export function Builder({
                     updateConfig({
                       size: n,
                       block: 1,
+                      ...(uniqueMode ? { selectionIds: rangeIds(1, n) } : {}),
                     })
                   }
                 >
@@ -226,29 +237,48 @@ export function Builder({
             </div>
           </>
         )}
-        {config.mode === "blocks" && (
+        {(config.mode === "blocks" || uniqueMode) && (
           <>
             <label className="field-label">
               03 <span>Pick a range</span>
-              <small>Grouped by {config.size}</small>
+              <small>
+                {uniqueMode
+                  ? `${catalog.unique.length} unique questions · `
+                  : ""}
+                Grouped by {config.size}
+              </small>
             </label>
             <div className="range-grid">
-              {blocks(config.size).map((b) => (
+              {blocks(
+                config.size,
+                uniqueMode ? catalog.unique.length : undefined,
+              ).map((b) => (
                 <button
                   key={b.start}
-                  className={config.block === b.start ? "selected" : ""}
+                  className={rangeSelected(b) ? "selected" : ""}
                   onClick={() =>
                     updateConfig({
                       block: b.start,
+                      ...(uniqueMode
+                        ? { selectionIds: rangeIds(b.start, b.end) }
+                        : {}),
                     })
                   }
                 >
                   {b.start}–{b.end}
-                  {config.block === b.start && <Check size={13} />}
+                  {rangeSelected(b) && <Check size={13} />}
                 </button>
               ))}
             </div>
           </>
+        )}
+        {sessionTypeLabels[config.mode] && (
+          <SessionPicker
+            key={config.mode}
+            config={config}
+            catalog={catalog}
+            updateConfig={updateConfig}
+          />
         )}
         {config.mode === "custom" && (
           <div className="custom-range">
