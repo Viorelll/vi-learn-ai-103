@@ -2,6 +2,7 @@ const pagePaths = {
   dashboard: "/",
   setup: "/setup",
   library: "/library",
+  statistics: "/statistics",
   history: "/history",
   test: "/test",
   results: "/results",

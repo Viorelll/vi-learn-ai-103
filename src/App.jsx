@@ -27,6 +27,10 @@ import {
   Info,
   GraduationCap,
   PanelLeftClose,
+  ChartColumn,
+  FileQuestion,
+  GitCompareArrows,
+  Fingerprint,
 } from "lucide-react";
 import bank from "./data/questions.json";
 import {
@@ -40,12 +44,18 @@ import {
   isOpenAIOnlyAnswer,
 } from "./engine";
 import { QuestionContent, AnswerInput, AnswerReview } from "./Question";
-import { Pill, Stat, Empty, Hero, Builder } from "./Dashboard";
+import { Pill, Stat, Empty, Hero, Builder, NewBadge } from "./Dashboard";
 import { relatedQuestions } from "./relatedQuestions";
 import { parseRoute, routeForPage } from "./routing";
 import { buildQuestionCatalog, sessionTypeLabels } from "./questionGroups";
+import { releases, latestRelease, releaseStats } from "./releases";
 const byId = Object.fromEntries(bank.map((q) => [q.id, q]));
 const catalog = buildQuestionCatalog(bank);
+const releaseRows = releases.map((release) => ({
+  release,
+  stats: releaseStats(release, bank, catalog),
+}));
+const TOTAL_QUESTIONS = bank.length;
 const isKnownQuestion = (id) => Boolean(byId[id]);
 const initialRoute = parseRoute(window.location, isKnownQuestion);
 const initialLibraryQuestionId =
@@ -194,7 +204,9 @@ export default function App() {
           : sessionTypeLabels[config.mode] ||
             (config.mode === "random"
               ? "Random practice"
-              : `Questions ${Math.min(...chosen)}–${Math.max(...chosen)}`),
+              : config.mode === "new"
+                ? `New questions · ${latestRelease.label}`
+                : `Questions ${Math.min(...chosen)}–${Math.max(...chosen)}`),
       };
       setSession(s);
       setReview(null);
@@ -294,6 +306,7 @@ export default function App() {
     : null;
   const matchesLibraryFormat = (question) => {
     if (typeFilter === "all") return true;
+    if (typeFilter === "new") return Boolean(question.isNew);
     if (typeFilter === "unclear") return isOpenAIOnlyAnswer(question);
     if (typeFilter === "case-study") return Boolean(question.caseStudy);
     return question.type === typeFilter;
@@ -377,6 +390,11 @@ export default function App() {
               icon: Library,
             },
             {
+              id: "statistics",
+              label: "Question statistics",
+              icon: ChartColumn,
+            },
+            {
               id: "history",
               label: "My progress",
               icon: ChartNoAxesCombined,
@@ -389,7 +407,10 @@ export default function App() {
             >
               <Icon size={19} />
               {label}
-              {id === "library" && <span className="nav-count">135</span>}
+              {id === "library" && (
+                <span className="nav-count">{TOTAL_QUESTIONS}</span>
+              )}
+              {id === "statistics" && <NewBadge size="small" />}
             </button>
           ))}
         </nav>
@@ -414,11 +435,13 @@ export default function App() {
             <div className="mini-progress">
               <i
                 style={{
-                  width: `${(uniquePracticed / 135) * 100}%`,
+                  width: `${(uniquePracticed / TOTAL_QUESTIONS) * 100}%`,
                 }}
               />
             </div>
-            <small>{uniquePracticed} of 135 questions practiced</small>
+            <small>
+              {uniquePracticed} of {TOTAL_QUESTIONS} questions practiced
+            </small>
           </div>
           <div className="local-profile">
             <div className="avatar">Y</div>
@@ -448,11 +471,13 @@ export default function App() {
                   ? "Session review"
                   : page === "library"
                     ? "Question library"
-                    : page === "history"
-                      ? "My progress"
-                      : page === "setup"
-                        ? "Build a test"
-                        : "Overview"}
+                    : page === "statistics"
+                      ? "Question statistics"
+                      : page === "history"
+                        ? "My progress"
+                        : page === "setup"
+                          ? "Build a test"
+                          : "Overview"}
             </strong>
           </div>
           <div className="topbar-right">
@@ -489,7 +514,7 @@ export default function App() {
                 </div>
                 <Pill tone="outline">
                   <span className="online-dot" />
-                  135 questions, one place
+                  {TOTAL_QUESTIONS} questions, one place
                 </Pill>
               </div>
               {page === "dashboard" && (
@@ -500,7 +525,7 @@ export default function App() {
                       icon={BookOpen}
                       title="Questions practiced"
                       value={uniquePracticed}
-                      suffix="/ 135"
+                      suffix={`/ ${TOTAL_QUESTIONS}`}
                       detail={
                         uniquePracticed
                           ? "Keep building your knowledge"
@@ -584,11 +609,11 @@ export default function App() {
                   <span className="eyebrow">ALL THE BUILDING BLOCKS</span>
                   <h1>Your question library.</h1>
                   <p>
-                    Browse all 135 questions and open any one without starting a
-                    session.
+                    Browse all {TOTAL_QUESTIONS} questions and open any one
+                    without starting a session.
                   </p>
                 </div>
-                <Pill>135 QUESTIONS</Pill>
+                <Pill>{TOTAL_QUESTIONS} QUESTIONS</Pill>
               </div>
               <div className="library-tools">
                 <label className="search-field">
@@ -612,6 +637,9 @@ export default function App() {
                   }}
                 >
                   <option value="all">All question formats</option>
+                  <option value="new">
+                    New questions · {latestRelease.label}
+                  </option>
                   {Object.entries(typeLabels).map(([k, v]) => (
                     <option key={k} value={k}>
                       {v}
@@ -640,7 +668,7 @@ export default function App() {
               <div className="library-list">
                 {visibleLibraryQuestions.map((q) => (
                   <button
-                    className="library-row"
+                    className={`library-row ${q.isNew ? "is-new" : ""}`}
                     key={q.id}
                     onClick={() => openLibraryQuestion(q.id)}
                   >
@@ -649,6 +677,7 @@ export default function App() {
                     </span>
                     <div>
                       <div className="library-meta">
+                        {q.isNew && <NewBadge />}
                         {q.caseStudy && <Pill tone="outline">Case study</Pill>}
                         <Pill>{typeLabels[q.type]}</Pill>
                         {q.keyDifference && (
@@ -712,7 +741,10 @@ export default function App() {
               <div className="page-heading">
                 <div>
                   <span className="eyebrow">QUESTION LIBRARY</span>
-                  <h1>Question {libraryQuestion.id}</h1>
+                  <h1 className="title-with-badge">
+                    Question {libraryQuestion.id}
+                    {libraryQuestion.isNew && <NewBadge size="large" />}
+                  </h1>
                   <p>
                     Review the source material without changing your session.
                   </p>
@@ -729,6 +761,7 @@ export default function App() {
                       QUESTION {libraryQuestion.id}
                     </span>
                     <div className="question-tags">
+                      {libraryQuestion.isNew && <NewBadge />}
                       <Pill>{typeLabels[libraryQuestion.type]}</Pill>
                       <span>Source #{libraryQuestion.id}</span>
                     </div>
@@ -791,6 +824,107 @@ export default function App() {
                   />
                 )}
               </section>
+            </>
+          )}
+          {page === "statistics" && (
+            <>
+              <div className="page-heading">
+                <div>
+                  <span className="eyebrow">WHAT IS IN THE BANK</span>
+                  <h1>Question statistics.</h1>
+                  <p>
+                    Every release, broken down into case studies, questions with
+                    different answers, and unique questions.
+                  </p>
+                </div>
+                <Pill>{TOTAL_QUESTIONS} QUESTIONS IN TOTAL</Pill>
+              </div>
+              {releaseRows.map(({ release, stats }) => (
+                <section
+                  className={`panel release-stats ${release.isNew ? "is-new" : ""}`}
+                  key={release.id}
+                >
+                  <div className="release-heading">
+                    <div>
+                      <span className="eyebrow">{release.date}</span>
+                      <h2>
+                        {release.label}
+                        {release.isNew && <NewBadge />}
+                      </h2>
+                      <p>{release.title}</p>
+                    </div>
+                    <button
+                      className="secondary"
+                      onClick={() => {
+                        setSearch("");
+                        setTypeFilter(release.isNew ? "new" : "all");
+                        setLibraryPage(1);
+                        go("library");
+                      }}
+                    >
+                      Browse these questions <ArrowRight size={16} />
+                    </button>
+                  </div>
+                  <div className="stats-grid four">
+                    <Stat
+                      icon={FileQuestion}
+                      title="Questions"
+                      value={stats.total}
+                      suffix={`Q${release.start}–Q${release.end}`}
+                      detail={
+                        stats.unavailable
+                          ? `${stats.unavailable} with incomplete source`
+                          : "All with answer keys"
+                      }
+                      color="sage"
+                    />
+                    <Stat
+                      icon={BookOpen}
+                      title="Case studies (use cases)"
+                      value={stats.caseStudies}
+                      suffix={stats.caseStudies === 1 ? "study" : "studies"}
+                      detail={`${stats.caseStudyQuestions} questions${stats.caseStudiesExtended ? " · extends the existing Contoso study" : ""}`}
+                      color="lavender"
+                    />
+                    <Stat
+                      icon={GitCompareArrows}
+                      title="Same scenario, different answers"
+                      value={stats.variantQuestions}
+                      suffix="questions"
+                      detail={`${stats.variantGroups} shared-scenario ${stats.variantGroups === 1 ? "group" : "groups"}${stats.variantGroupsExtended ? ` · ${stats.variantGroupsExtended} extends an earlier group` : ""}`}
+                      color="peach"
+                    />
+                    <Stat
+                      icon={Fingerprint}
+                      title="Unique questions"
+                      value={stats.unique}
+                      suffix="standalone"
+                      detail={
+                        stats.duplicates
+                          ? `${stats.duplicates} exact duplicates excluded`
+                          : "No repeated scenarios"
+                      }
+                      color="sage"
+                    />
+                  </div>
+                  <div className="release-formats">
+                    {Object.entries(typeLabels)
+                      .filter(([type]) => stats.formats[type])
+                      .map(([type, label]) => (
+                        <span key={type}>
+                          {label}
+                          <strong>{stats.formats[type]}</strong>
+                        </span>
+                      ))}
+                    {stats.keyDifferences > 0 && (
+                      <span>
+                        Key differs from source
+                        <strong>{stats.keyDifferences}</strong>
+                      </span>
+                    )}
+                  </div>
+                </section>
+              ))}
             </>
           )}
           {page === "history" && (
@@ -895,6 +1029,7 @@ export default function App() {
                           QUESTION {session.index + 1} OF {session.ids.length}
                         </span>
                         <div className="question-tags">
+                          {q.isNew && <NewBadge />}
                           <Pill>{typeLabels[q.type]}</Pill>
                           <span>Source #{q.id}</span>
                         </div>
@@ -1008,9 +1143,9 @@ export default function App() {
                         {session.ids.map((id, i) => (
                           <button
                             key={id}
-                            title={`Question ${id}`}
+                            title={`Question ${id}${byId[id].isNew ? " (new)" : ""}`}
                             aria-label={`Go to question ${id}`}
-                            className={`${session.index === i ? "current" : ""} ${isAnswered(byId[id], session.answers[id]) ? "answered" : ""} ${session.flags.includes(id) ? "flagged" : ""}`}
+                            className={`${session.index === i ? "current" : ""} ${isAnswered(byId[id], session.answers[id]) ? "answered" : ""} ${session.flags.includes(id) ? "flagged" : ""} ${byId[id].isNew ? "new-question" : ""}`}
                             onClick={() => changeIndex(i)}
                           >
                             {i + 1}
@@ -1213,6 +1348,7 @@ export default function App() {
                           <span className="review-title">
                             <strong>
                               Question {r.id}
+                              {item.isNew && <NewBadge />}
                               <Pill>{typeLabels[item.type]}</Pill>
                             </strong>
                             <span>{item.prompt.slice(0, 145)}…</span>

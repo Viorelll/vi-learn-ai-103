@@ -16,9 +16,9 @@ try {
   await page
     .getByRole("button", { name: /Unique questions.*standalone/ })
     .click();
-  await expect(page.locator(".picker-row")).toHaveCount(115);
+  await expect(page.locator(".picker-row")).toHaveCount(134);
   await expect(page.locator(".builder-footer")).toContainText("10 questions");
-  await expect(page.locator(".range-grid button").last()).toHaveText("111–115");
+  await expect(page.locator(".range-grid button").last()).toHaveText("131–134");
   await page.locator(".size-buttons button").filter({ hasText: "15" }).click();
   await expect(page.locator(".builder-footer")).toContainText("15 questions");
   await page.locator(".range-grid button").nth(1).click();
@@ -47,7 +47,7 @@ try {
   await page.reload();
   await expect(page.locator(".range-grid button.selected")).toHaveText("16–30");
   await page.locator(".range-grid button").last().click();
-  await expect(page.locator(".builder-footer")).toContainText("10 questions");
+  await expect(page.locator(".builder-footer")).toContainText("14 questions");
   await page.locator(".size-buttons button").filter({ hasText: "30" }).click();
   await expect(page.locator(".builder-footer")).toContainText("30 questions");
   await page
@@ -70,7 +70,7 @@ try {
   await page
     .getByRole("combobox", { name: "Filter session question format" })
     .selectOption("multiple");
-  await expect(page.locator(".picker-row")).toHaveCount(6);
+  await expect(page.locator(".picker-row")).toHaveCount(7);
   await page
     .getByRole("combobox", { name: "Filter session question format" })
     .selectOption("all");
@@ -109,12 +109,12 @@ try {
   await page.getByRole("button", { name: /Case studies.*One study/ }).click();
   await expect(page.locator(".picker-row")).toHaveCount(1);
   await expect(page.locator(".picker-row")).toContainText("Contoso");
-  await expect(page.locator(".builder-footer")).toContainText("8 questions");
+  await expect(page.locator(".builder-footer")).toContainText("10 questions");
   await page
     .getByRole("button", { name: "Start session", exact: true })
     .click();
   await expect(page.locator(".test-heading h1")).toHaveText("Case studies");
-  await expect(page.locator(".question-map button")).toHaveCount(8);
+  await expect(page.locator(".question-map button")).toHaveCount(10);
   await page
     .getByRole("button", { name: "Go to question 67", exact: true })
     .click();
@@ -125,12 +125,12 @@ try {
   await page
     .getByRole("button", { name: /Shared-question variants.*Same scenario/ })
     .click();
-  await expect(page.locator(".picker-row")).toHaveCount(3);
-  await expect(page.locator(".builder-footer")).toContainText("10 questions");
+  await expect(page.locator(".picker-row")).toHaveCount(4);
+  await expect(page.locator(".builder-footer")).toContainText("15 questions");
   await page
     .getByRole("combobox", { name: "Filter session question format" })
     .selectOption("matrix");
-  await expect(page.locator(".picker-row")).toHaveCount(2);
+  await expect(page.locator(".picker-row")).toHaveCount(3);
   await page
     .getByRole("combobox", { name: "Filter session question format" })
     .selectOption("all");
@@ -182,7 +182,7 @@ try {
   await mobile
     .getByRole("button", { name: /Shared-question variants.*Same scenario/ })
     .click();
-  await expect(mobile.locator(".picker-row")).toHaveCount(3);
+  await expect(mobile.locator(".picker-row")).toHaveCount(4);
   expect(
     await mobile.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

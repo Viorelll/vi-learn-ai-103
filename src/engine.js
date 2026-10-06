@@ -1,6 +1,7 @@
 import { selectedEntries, sessionTypeLabels } from "./questionGroups.js";
+import { latestRelease } from "./releases.js";
 
-export const TOTAL = 135;
+export const TOTAL = 161;
 export const typeLabels = {
   "case-study": "Case study",
   single: "Single choice",
@@ -57,13 +58,17 @@ export function selectQuestions(config, random = Math.random, catalog = null) {
       ? Number(config.start)
       : config.mode === "blocks"
         ? Number(config.block)
-        : 1;
+        : config.mode === "new"
+          ? latestRelease.start
+          : 1;
   const end =
     config.mode === "custom"
       ? Number(config.end)
       : config.mode === "blocks"
         ? Math.min(start + Number(config.size) - 1, TOTAL)
-        : TOTAL;
+        : config.mode === "new"
+          ? latestRelease.end
+          : TOTAL;
   if (
     !Number.isInteger(start) ||
     !Number.isInteger(end) ||
@@ -71,7 +76,7 @@ export function selectQuestions(config, random = Math.random, catalog = null) {
     end > TOTAL ||
     end < start
   )
-    throw new Error("Choose a valid range between 1 and 135.");
+    throw new Error(`Choose a valid range between 1 and ${TOTAL}.`);
   let ids = Array.from(
     {
       length: end - start + 1,

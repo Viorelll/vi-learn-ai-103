@@ -16,10 +16,10 @@ import { relatedQuestions } from "../src/relatedQuestions.js";
 const bank = JSON.parse(
   readFileSync(new URL("../src/data/questions.json", import.meta.url)),
 );
-test("all 135 source questions have valid, renderable controls and keys", () => {
+test("all 161 source questions have valid, renderable controls and keys", () => {
   assert.deepEqual(
     bank.map((q) => q.id),
-    Array.from({ length: 135 }, (_, i) => i + 1),
+    Array.from({ length: 161 }, (_, i) => i + 1),
   );
   for (const q of bank) {
     assert.ok(q.prompt);
@@ -49,11 +49,11 @@ test("finds exact duplicate tasks and shared case-study specifications", () => {
   assert.deepEqual(relatedQuestions(lookup(1), bank), [
     {
       label: "Same case-study specification",
-      questionIds: [2, 27, 28, 56, 61, 62],
+      questionIds: [2, 27, 28, 56, 61, 62, 145, 146],
     },
   ]);
   assert.deepEqual(relatedQuestions(lookup(38), bank), [
-    { label: "Duplicate task", questionIds: [100] },
+    { label: "Duplicate task", questionIds: [100, 153] },
   ]);
   assert.deepEqual(relatedQuestions(lookup(66), bank), [
     { label: "Duplicate task", questionIds: [68] },
@@ -73,15 +73,15 @@ test("finds verified similar tasks beyond exact source matches", () => {
 });
 test("unclear answer category contains only provisional source answers with OpenAI guidance", () => {
   const unclear = bank.filter(isOpenAIOnlyAnswer);
-  assert.equal(unclear.length, 45);
+  assert.equal(unclear.length, 56);
   assert.ok(
     unclear.every(
       (q) => hasUnclearSourceAnswer(q) && q.reviewAnswer && q.explanation,
     ),
   );
 });
-test("10, 15, 20 and 30 blocks cover the bank once with correct tails", () => {
-  for (const size of [10, 15, 20, 30]) {
+test("10, 15, 20, 30 and 50 blocks cover the bank once with correct tails", () => {
+  for (const size of [10, 15, 20, 30, 50]) {
     const all = blocks(size).flatMap((b) =>
       selectQuestions({ mode: "blocks", block: b.start, size }),
     );
@@ -91,18 +91,23 @@ test("10, 15, 20 and 30 blocks cover the bank once with correct tails", () => {
     );
   }
   assert.deepEqual(blocks(15)[1], { start: 16, end: 30 });
-  assert.deepEqual(blocks(10).at(-1), { start: 131, end: 135 });
+  assert.deepEqual(blocks(10).at(-1), { start: 161, end: 161 });
+  assert.deepEqual(blocks(50).at(-1), { start: 151, end: 161 });
 });
 test("random mode samples without repeats and full mode is sequential", () => {
-  for (const size of [10, 15, 20, 30]) {
+  for (const size of [10, 15, 20, 30, 50]) {
     const ids = selectQuestions({ mode: "random", size });
     assert.equal(ids.length, size);
     assert.equal(new Set(ids).size, size);
-    assert.ok(ids.every((n) => n >= 1 && n <= 135));
+    assert.ok(ids.every((n) => n >= 1 && n <= 161));
   }
   assert.deepEqual(
     selectQuestions({ mode: "all" }),
     bank.map((q) => q.id),
+  );
+  assert.deepEqual(
+    selectQuestions({ mode: "new" }),
+    bank.filter((q) => q.isNew).map((q) => q.id),
   );
 });
 test("custom ranges validate input and include both bounds", () => {
@@ -113,7 +118,7 @@ test("custom ranges validate input and include both bounds", () => {
   for (const [start, end] of [
     [0, 10],
     [10, 9],
-    [1, 136],
+    [1, 162],
     [1.5, 10],
   ])
     assert.throws(() => selectQuestions({ mode: "custom", start, end }));

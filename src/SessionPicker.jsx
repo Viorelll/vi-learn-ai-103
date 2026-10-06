@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Search, CheckCheck, X } from "lucide-react";
-import { typeLabels } from "./engine";
+import { typeLabels, TOTAL } from "./engine";
 import { selectedEntries } from "./questionGroups";
+import { latestRelease } from "./releases";
+import { NewBadge } from "./Dashboard";
+
+const hasNewQuestion = (entry) =>
+  entry.ids.some((id) => id >= latestRelease.start);
 
 export default function SessionPicker({ config, catalog, updateConfig }) {
   const [search, setSearch] = useState("");
@@ -10,7 +15,10 @@ export default function SessionPicker({ config, catalog, updateConfig }) {
   const selected = selectedEntries(config, catalog).map((entry) => entry.id);
   const visible = entries.filter(
     (entry) =>
-      (format === "all" || entry.formats.includes(format)) &&
+      (format === "all" ||
+        (format === "new"
+          ? hasNewQuestion(entry)
+          : entry.formats.includes(format))) &&
       (!search ||
         `${entry.title} ${entry.description} ${entry.ids.join(" ")}`
           .toLowerCase()
@@ -61,6 +69,9 @@ export default function SessionPicker({ config, catalog, updateConfig }) {
           onChange={(e) => setFormat(e.target.value)}
         >
           <option value="all">All answer formats</option>
+          {entries.some(hasNewQuestion) && (
+            <option value="new">New · {latestRelease.label}</option>
+          )}
           {Object.entries(typeLabels)
             .filter(([type]) =>
               entries.some((entry) => entry.formats.includes(type)),
@@ -112,7 +123,10 @@ export default function SessionPicker({ config, catalog, updateConfig }) {
               onChange={(e) => updateSelection([entry.id], e.target.checked)}
             />
             <span>
-              <strong>{entry.title}</strong>
+              <strong>
+                {entry.title}
+                {hasNewQuestion(entry) && <NewBadge size="small" />}
+              </strong>
               <span className="picker-description">{entry.description}</span>
               <span className="picker-meta">
                 {entry.ids.length > 1 && `Sources: ${entry.ids.join(", ")} · `}
@@ -140,7 +154,7 @@ export default function SessionPicker({ config, catalog, updateConfig }) {
         </p>
       )}
       <p className="picker-note">
-        All 135 sources reviewed: {catalog.unique.length} unique standalone
+        All {TOTAL} sources reviewed: {catalog.unique.length} unique standalone
         questions, {catalog.cases.length} case study, {catalog.variants.length}{" "}
         shared-question groups. Incomplete sources{" "}
         {catalog.unavailable.join(" and ")} are excluded from these sessions.

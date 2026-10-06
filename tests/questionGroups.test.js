@@ -14,9 +14,9 @@ const bank = JSON.parse(
 const catalog = buildQuestionCatalog(bank);
 
 test("audit partitions every source question with no overlaps or lost questions", () => {
-  assert.equal(catalog.unique.length, 115);
+  assert.equal(catalog.unique.length, 134);
   assert.equal(catalog.cases.length, 1);
-  assert.equal(catalog.variants.length, 3);
+  assert.equal(catalog.variants.length, 4);
   assert.deepEqual(catalog.unavailable, [66, 68]);
   const ids = ["unique", "cases", "variants"].flatMap((mode) =>
     catalog[mode].flatMap((entry) => entry.ids),
@@ -26,7 +26,7 @@ test("audit partitions every source question with no overlaps or lost questions"
     [...ids, ...catalog.unavailable].sort((a, b) => a - b),
     bank.map((q) => q.id),
   );
-  assert.equal(Object.keys(catalog.byQuestion).length, 135);
+  assert.equal(Object.keys(catalog.byQuestion).length, 161);
 });
 
 test("bullet and line-wrap differences do not split the Contoso study", () => {
@@ -34,7 +34,10 @@ test("bullet and line-wrap differences do not split the Contoso study", () => {
     normalizeQuestionText(bank[0].caseStudy),
     normalizeQuestionText(bank[66].caseStudy),
   );
-  assert.deepEqual(catalog.cases[0].ids, [1, 2, 27, 28, 56, 61, 62, 67]);
+  assert.deepEqual(
+    catalog.cases[0].ids,
+    [1, 2, 27, 28, 56, 61, 62, 67, 145, 146],
+  );
 });
 
 test("same-scenario solutions and changed answer choices are grouped, never discarded", () => {
@@ -42,8 +45,9 @@ test("same-scenario solutions and changed answer choices are grouped, never disc
     catalog.variants.map((entry) => entry.ids),
     [
       [23, 24, 25, 26],
-      [38, 100],
+      [38, 100, 153],
       [41, 42, 43, 44],
+      [137, 138, 139, 140],
     ],
   );
   assert.ok(catalog.variants[0].description.startsWith("You have"));
@@ -54,10 +58,11 @@ test("same-scenario solutions and changed answer choices are grouped, never disc
     [
       [23, 24, 25, 26],
       [41, 42, 43, 44],
+      [137, 138, 139, 140],
     ],
   );
   const uniqueIds = selectQuestions({ mode: "unique" }, Math.random, catalog);
-  assert.equal(uniqueIds.length, 115);
+  assert.equal(uniqueIds.length, 134);
   assert.ok(
     uniqueIds.every(
       (id) =>
@@ -84,7 +89,7 @@ test("category modes select exact individual questions or complete groups", () =
       Math.random,
       catalog,
     ),
-    [1, 2, 27, 28, 56, 61, 62, 67],
+    [1, 2, 27, 28, 56, 61, 62, 67, 145, 146],
   );
   assert.deepEqual(
     selectQuestions(
@@ -92,7 +97,7 @@ test("category modes select exact individual questions or complete groups", () =
       Math.random,
       catalog,
     ),
-    [23, 24, 25, 26, 38, 100],
+    [23, 24, 25, 26, 38, 100, 153],
   );
   for (const mode of ["unique", "cases", "variants"]) {
     assert.throws(() =>
@@ -120,7 +125,7 @@ test("shuffling preserves group adjacency and does not mutate saved selection or
   };
   const snapshot = JSON.stringify({ config, catalog });
   const ids = selectQuestions(config, () => 0, catalog);
-  assert.equal(new Set(ids).size, 10);
+  assert.equal(new Set(ids).size, 15);
   for (const entry of catalog.variants) {
     const start = ids.indexOf(entry.ids[0]);
     assert.deepEqual(ids.slice(start, start + entry.ids.length), entry.ids);

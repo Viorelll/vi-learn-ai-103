@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { grade, hasUnclearSourceAnswer } from "./engine";
 import { formatStructuredText } from "./textFormatting";
+import { NewBadge } from "./Dashboard";
+import { latestRelease } from "./releases";
 
 function StructuredText({ text, className, emphasizeClosingTask = false }) {
   const blocks = formatStructuredText(text, { emphasizeClosingTask });
@@ -273,8 +275,10 @@ const examTopicsDiscussionIds = {
   135: 424408,
 };
 
-function examTopicsUrl(questionId) {
+function examTopicsUrl(q) {
+  const questionId = q.id;
   const discussionId =
+    q.discussionId ??
     examTopicsDiscussionIds[questionId] ??
     (questionId <= 65 ? 412432 + questionId : 421446 + questionId);
   return `https://www.examtopics.com/discussions/microsoft/view/${discussionId}-exam-ai-103-topic-1-question-${questionId}-discussion/`;
@@ -283,9 +287,18 @@ function examTopicsUrl(questionId) {
 export function QuestionContent({ q, relatedGroups = [] }) {
   return (
     <>
+      {q.isNew && (
+        <div className="new-question-banner" role="note">
+          <NewBadge size="large" />
+          <span>
+            New question added on {latestRelease.date}. Answers come from the
+            ExamTopics discussion and an independent study review.
+          </span>
+        </div>
+      )}
       <a
         className="examtopics-link"
-        href={examTopicsUrl(q.id)}
+        href={examTopicsUrl(q)}
         target="_blank"
         rel="noreferrer"
         aria-label={`View question ${q.id} on ExamTopics`}
@@ -342,13 +355,11 @@ export function QuestionContent({ q, relatedGroups = [] }) {
         </pre>
       )}
       {q.images.map((src) => (
-        <details
-          key={src}
-          className="exhibit"
-        >
+        <details key={src} className="exhibit">
           <summary>
             <Expand size={16} />
-            Original question &amp; code exhibit <span>PDF p. {q.page}</span>
+            Original question &amp; code exhibit{" "}
+            <span>{q.page ? `PDF p. ${q.page}` : "ExamTopics"}</span>
             <ChevronRight size={16} />
           </summary>
           <a
@@ -473,9 +484,11 @@ function OpenAIAnswerCard({ q }) {
         </span>
         <div>
           <span className="evidence-kicker">
-            INDEPENDENT OPENAI STUDY ANSWER
+            {q.isNew
+              ? "INDEPENDENT STUDY ANSWER"
+              : "INDEPENDENT OPENAI STUDY ANSWER"}
           </span>
-          <h4>OpenAI review</h4>
+          <h4>{q.isNew ? "Study review" : "OpenAI review"}</h4>
         </div>
       </div>
       <p className="evidence-summary">{q.reviewAnswer}</p>

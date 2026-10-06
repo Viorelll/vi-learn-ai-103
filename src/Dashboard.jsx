@@ -12,11 +12,24 @@ import {
   CheckCircle2,
   Flag,
 } from "lucide-react";
-import { blocks } from "./engine";
+import { blocks, TOTAL } from "./engine";
 import SessionPicker from "./SessionPicker";
 import { sessionTypeLabels } from "./questionGroups";
+import { latestRelease } from "./releases";
 export function Pill({ children, tone = "" }) {
   return <span className={`pill ${tone}`}>{children}</span>;
+}
+export function NewBadge({ size = "" }) {
+  return (
+    <span
+      className={`new-badge ${size}`}
+      title={`Added in the ${latestRelease.label}`}
+    >
+      <Sparkles size={size === "small" ? 12 : 16} />
+      NEW
+      {size === "large" && <small>{latestRelease.label}</small>}
+    </span>
+  );
 }
 export function Stat({ icon: Icon, title, value, suffix, detail, color }) {
   return (
@@ -158,7 +171,13 @@ export function Builder({
               id: "all",
               icon: ListOrdered,
               title: "The full collection",
-              desc: "All 135, start to finish",
+              desc: `All ${TOTAL}, start to finish`,
+            },
+            {
+              id: "new",
+              icon: Sparkles,
+              title: "New questions",
+              desc: `${latestRelease.label} · ${latestRelease.start}–${latestRelease.end}`,
             },
             {
               id: "custom",
@@ -204,7 +223,10 @@ export function Builder({
               }
             >
               <Icon size={21} />
-              <strong>{title}</strong>
+              <strong>
+                {title}
+                {id === "new" && <NewBadge size="small" />}
+              </strong>
               <small>{desc}</small>
               <span className="radio-indicator">
                 {config.mode === id && <i />}
@@ -218,7 +240,7 @@ export function Builder({
               02 <span>How many questions?</span>
             </label>
             <div className="size-buttons">
-              {[10, 15, 20, 30].map((n) => (
+              {[10, 15, 20, 30, 50].map((n) => (
                 <button
                   key={n}
                   className={config.size === n ? "selected" : ""}
@@ -287,7 +309,7 @@ export function Builder({
               <input
                 type="number"
                 min="1"
-                max="135"
+                max={TOTAL}
                 value={config.start}
                 onChange={(e) =>
                   updateConfig({
@@ -302,7 +324,7 @@ export function Builder({
               <input
                 type="number"
                 min="1"
-                max="135"
+                max={TOTAL}
                 value={config.end}
                 onChange={(e) =>
                   updateConfig({
@@ -318,7 +340,19 @@ export function Builder({
             <BookOpen size={23} />
             <div>
               <strong>The complete AI-103 collection</strong>
-              <p>Questions 1–135. Pause and resume whenever you need.</p>
+              <p>Questions 1–{TOTAL}. Pause and resume whenever you need.</p>
+            </div>
+          </div>
+        )}
+        {config.mode === "new" && (
+          <div className="all-note">
+            <Sparkles size={23} />
+            <div>
+              <strong>{latestRelease.label}</strong>
+              <p>
+                Questions {latestRelease.start}–{latestRelease.end}, added on{" "}
+                {latestRelease.date}.
+              </p>
             </div>
           </div>
         )}
@@ -408,6 +442,11 @@ export function Builder({
           <BookOpen size={20} />
           <strong>Built from your study guide</strong>
           <p>135 questions · September 15, 2026</p>
+          <p>
+            <NewBadge size="small" /> +
+            {latestRelease.end - latestRelease.start + 1} questions ·{" "}
+            {latestRelease.date}
+          </p>
           <small>
             Original and reviewed PDF keys are preserved. Two cropped questions
             are study-only; two statements lack a key. Scores exclude missing
